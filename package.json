@@ -1,0 +1,30 @@
+{
+  "name": "nfc-electron-app",
+  "version": "1.0.0",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "sudo electron .",
+    "build": "",
+    "rebuild": "electron-rebuild -f -w nfc-pcsc",
+    "dist": "electron-builder",
+    "dev": "electron . --no-sandbox"
+  },
+  "build": {
+    "appId": "com.example.nfcapp",
+    "productName": "NFC Reader App",
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    }
+  },
+  "devDependencies": {
+    "electron": "19.0.0",
+    "electron-builder": "^24.6.3",
+    "@electron/rebuild": "^3.2.9"
+  },
+  "dependencies": {
+    "nfc-pcsc": "^0.8.0"
+  }
+}
