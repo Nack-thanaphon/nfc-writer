@@ -1,10 +1,11 @@
 {
   "name": "nfc-electron-app",
   "version": "1.0.0",
+  "description": "NFC Reader Application",
   "main": "src/main.js",
+  "license": "MIT",
   "scripts": {
-    "start": "sudo electron .",
-    "build": "",
+    "start": "electron .",
     "rebuild": "electron-rebuild -f -w nfc-pcsc",
     "dist": "electron-builder",
     "dev": "electron . --no-sandbox"
@@ -20,11 +21,17 @@
     }
   },
   "devDependencies": {
-    "electron": "19.0.0",
+    "@electron/rebuild": "^3.2.9",
+    "electron": "^19.0.0",
     "electron-builder": "^24.6.3",
-    "@electron/rebuild": "^3.2.9"
+    "electron-rebuild": "^3.2.9"
   },
   "dependencies": {
-    "nfc-pcsc": "^0.8.0"
+    "@pokusew/pcsclite": "^0.6.0",
+    "nfc-pcsc": "^0.8.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/nfc-writer.git"
   }
 }

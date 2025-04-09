@@ -3,9 +3,10 @@ const { NFC } = require('nfc-pcsc');
 class NFCManager {
     constructor() {
         this.nfc = new NFC();
-        this.log = () => {};
+        this.log = () => { };
         this.readers = new Map();
         this.lastCardInfo = null;
+        this.cardCallback = null;
 
         this.setupListeners();
     }
@@ -17,27 +18,42 @@ class NFCManager {
                 return;
             }
 
-            // Debug log
             console.log('Reader connected:', reader.reader.name);
-
+            if (this.cardCallback) {
+                this.cardCallback({
+                    type: 'reader-attached',
+                    readerName: reader.reader.name
+                });
+            }
             this.readers.set(reader.reader.name, reader);
             this.log(`${reader.reader.name} device attached`);
 
-            // Handle reader errors
-            reader.on('error', (err) => {
-                console.error(`Reader error: ${err}`);
+            // Card detection handler
+            reader.on('card', async (card) => {
+                this.lastCardInfo = {
+                    uid: card.uid,
+                };
+                // this.log(`Card detected: ${card.uid}`);
+                try {
+                    let uriParts = [];
+                    // Read URI data from blocks 6-11
+                    for (let block = 6; block <= 11; block++) {
+                        const data = await reader.read(block, 4);
+                        uriParts.push(data.toString('ascii'));
+                    }
+                    // Combine URI parts and clean non-printable characters
+                    const fullUri = uriParts.join('').replace(/[^\x20-\x7E]/g, '');
+                    this.lastCardInfo.uri = fullUri;
+
+                    if (this.cardCallback) {
+                        this.cardCallback(this.lastCardInfo);
+                    }
+                } catch (err) {
+                    console.error('Error reading card:', err);
+                    this.log(`Error reading card: ${err.message}`);
+                }
             });
 
-            // Uncomment if you want to handle status changes
-            // reader.on('status', (status) => {
-            //     console.log('Status changed:', status);
-            // });
-        });
-
-        // Handle NFC errors
-        this.nfc.on('error', (err) => {
-            console.error('NFC Error:', err);
-            this.log(`NFC Error: ${err.message}`);
         });
     }
 
@@ -125,4 +141,4 @@ class NFCManager {
 }
 
 // Export a single instance of NFCManager
-module.exports = new NFCManager();
+module.exports = NFCManager;

@@ -1,4 +1,6 @@
+
 const { ipcRenderer } = require('electron');
+// const { nfc } = require('./main.js');
 
 // DOM Elements
 const readTab = document.getElementById('readTab');
@@ -39,46 +41,28 @@ function showToast(message, type = 'success') {
   }, 3500);
 }
 
-function updateCardContent(uid, data = []) {
-  currentUid = uid;
+function updateCardContent(uid, data) {
+  const cardUid = document.getElementById('cardUid');
+  const cardContent = document.getElementById('cardContent');
+
+  // Update UID display
   cardUid.textContent = `UID: ${uid}`;
 
+  // Update content display
   cardContent.innerHTML = '';
 
-  const uidElement = document.createElement('div');
-  uidElement.className = 'card-uid';
-  uidElement.textContent = uid;
-  cardContent.appendChild(uidElement);
-
-  if (data.length > 0) {
+  if (data) {
     const dataContainer = document.createElement('div');
     dataContainer.className = 'card-data';
-
-    data.forEach((item) => {
-      const [key, value] = item.split(':', 2);
-
-      const dataItem = document.createElement('div');
-      dataItem.className = 'data-item';
-
-      const label = document.createElement('div');
-      label.className = 'data-label';
-      label.textContent = key.trim();
-
-      const dataValue = document.createElement('div');
-      dataValue.className = 'data-value';
-      dataValue.textContent = value ? value.trim() : '';
-
-      dataItem.appendChild(label);
-      dataItem.appendChild(dataValue);
-      dataContainer.appendChild(dataItem);
-    });
-
+    dataContainer.innerHTML = `
+      <div class="data-label">ข้อมูลในการ์ด:</div>
+      <div class="data-value">${data}</div>
+    `;
     cardContent.appendChild(dataContainer);
   } else {
     const emptyData = document.createElement('div');
     emptyData.textContent = 'ไม่พบข้อมูลในการ์ด';
     emptyData.style.color = 'var(--text-secondary)';
-    emptyData.style.marginTop = '10px';
     cardContent.appendChild(emptyData);
   }
 }
@@ -148,10 +132,22 @@ readTab.addEventListener('click', () => switchTab('read'));
 writeTab.addEventListener('click', () => switchTab('write'));
 formatTab.addEventListener('click', () => switchTab('format'));
 
-readButton.addEventListener('click', () => {
-  logMessage('รอการอ่านการ์ด...');
-  waiting = true;
-});
+// readButton.addEventListener('click', () => {
+//   if (!nfc) {
+//     logMessage('เครื่องอ่าน NFC ยังไม่ถูกเริ่มต้น');
+//     showToast('กรุณารอให้เครื่องอ่าน NFC พร้อมใช้งาน', 'error');
+//     return;
+//   }
+
+//   if (!nfc.hasReader()) {
+//     logMessage(' ไม่พบเครื่องอ่าน NFC');
+//     showToast('ไม่พบเครื่องอ่าน NFC', 'error');
+//     return;
+//   }
+
+//   logMessage('รอการอ่านการ์ด...');
+//   waiting = true;
+// });
 
 writeButton.addEventListener('click', async () => {
   const dataToWrite = dataInput.value.trim();
@@ -159,12 +155,11 @@ writeButton.addEventListener('click', async () => {
     showToast('ใส่ข้อมูลต้องการ', 'error');
     return;
   }
-
   logMessage(`ข้อมูล: "${dataToWrite}"`);
   waiting = true;
-
   try {
-    await nfcManager.writeCard(dataToWrite);
+
+    await nfc.writeCard(dataToWrite);
     showToast('ข้อมูลสำเร็จ', 'success');
   } catch (err) {
     logMessage(`ข้อมูลไม่สำเร็จ: ${err.message}`);
@@ -185,8 +180,9 @@ clearButton.addEventListener('click', () => {
   logArea.value = '';
 });
 
-// Listen for NFC events
+
 ipcRenderer.on('reader-attached', (event, readerName) => {
+  console.log('Reader attached event received:', readerName);
   updateReaderStatus(true, readerName);
 });
 
@@ -211,8 +207,16 @@ ipcRenderer.on('nfc-init-error', (event, error) => {
 });
 
 ipcRenderer.on('card-data', (event, cardInfo) => {
-  logMessage(`Card UID: ${cardInfo.uid}`);
-  logMessage(`Card Data: ${cardInfo.data}`);
+  // Update UI with card data
+  // updateCardContent(cardInfo.uid, cardInfo.data);
+  // Log the read operation
+  logMessage(`อ่านการ์ดสำเร็จ`);
+  logMessage(`ข้อมูล : ${cardInfo.uri}`,);
+});
+
+// Listen for log messages
+ipcRenderer.on('log-message', (event, message) => {
+  logMessage(message);
 });
 
 // Initial setup
